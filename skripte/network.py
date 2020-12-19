@@ -2,6 +2,8 @@
 import numpy as np
 from .kernels import kernels
 
+# !! the big problem now is that first layer has activation fucntion as well
+
 
 class Neuron():
     def __init__(self, value, index, kernel='ReLu'):
@@ -35,8 +37,15 @@ class Synapse():
 class Layer():
     def __init__(self, size, kernels='ReLu'):
         self.size = size
-        self.layer = np.array([Neuron(np.random.random(), x, kernel='ReLu')
+        self.layer = np.array([Neuron(0, x, kernel='ReLu')
                                for x in range(size)])
+
+    def __repr__(self):
+        return ' '.join([str(round(neuron.value, 3)) for neuron in self.layer])
+
+    # ? funkcija, ki se uporablja samo za update prvega layerja - za input function
+    def updateLayer(self, values):
+        [neuron.updateValue(val) for neuron, val in zip(self.layer, values)]
 
 
 #! this is fully connected layer - not bothering with other connections
@@ -56,6 +65,17 @@ class ConnectionLayer():
     def parentNodes(self, i):
         return self.connections[:, i]
 
+    # ? s to funkcijo lahko zdaj cisto vsak nevron, ki ni v input layerju spreminjamo
+    # ?  uporabljal bom zato, da izračunam vrednosti v mreži
+    def updateChildNeuron(self, i):
+        neuron = self.childLayer.layer[i]
+        new = sum([synapse.output() for synapse in self.parentNodes(i)])
+        neuron.updateValue(new)
+
+    def updateChildrenNeurons(self):
+        for i in range(len(self.childLayer.layer)):
+            self.updateChildNeuron(i)
+
 
 class Network():
     #! first layer is always the input layer
@@ -72,9 +92,9 @@ class Network():
     def __repr__(self):
         def format_str(layerName, nrNeurons):
             names = ['Input', 'Hidden Layer', 'Output']
-            return f'{names[layerName]}: {nrNeurons} neurons \n'
+            return f'{names[layerName]}: {nrNeurons} nevronov \n'
 
-        reprs = []
+        reprs = ["V celoti povezana mreža\n"]
         for i, dim in enumerate(self.dimensions):
             name = 0
             if i:
@@ -86,3 +106,15 @@ class Network():
         return ''.join(reprs)
 
         # def
+
+    def showNeuronValues(self):
+        return self.network
+
+    def calculateOutput(self):
+        for conn_layer in self.connectors:
+            conn_layer.updateChildrenNeurons()
+
+        return self.network[-1]
+
+    def setInputValues(self, values):
+        self.network[0].updateLayer(values)
