@@ -2,7 +2,7 @@
 import numpy as np
 from .kernels import kernels
 from .architecture import *
-from .cost import meanSquare
+from .cost import meanSquare as costFunction
 
 # !! the big problem now is that first layer has activation fucntion as well
 
@@ -50,4 +50,4 @@ class Network():
         self.network[0].updateLayer(values)
 
     def cost(self, y):
-        return meanSquare(np.array(y), self.calculateOutput())
+        return costFunction(np.array(y), self.calculateOutput())
