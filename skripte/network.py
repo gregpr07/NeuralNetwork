@@ -38,7 +38,7 @@ class Network():
         # def
 
     def showNeuronValues(self):
-        return self.network
+        return (self.network)
 
     def calculateOutput(self):
         for conn_layer in self.connectors:

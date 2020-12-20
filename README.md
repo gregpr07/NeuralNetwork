@@ -8,6 +8,11 @@
 
 Ta mreža predstavlja 10 inputov in 2 ouputa.
 
+## Beware
+
+Zaenkrat ni implementiran dropout in backpropagation.
+Prvi approach bo zelo inefficient, ker bom racunal odvod za vsak nevron (connection) posebej.
+
 ## Viri in literatura
 
 - https://www.youtube.com/watch?v=tIeHLnjs5U8
