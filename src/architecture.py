@@ -1,5 +1,5 @@
 import numpy as np
-from .kernels import kernels
+from .kernel import kernels
 
 
 class Neuron():

@@ -1,6 +1,6 @@
 # implementation of simple dumb network
 import numpy as np
-from .kernels import kernels
+from .kernel import kernels
 from .architecture import *
 from .cost import meanSquare as costFunction
 
