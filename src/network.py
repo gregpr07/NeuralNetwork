@@ -1,53 +1,41 @@
-# implementation of simple dumb network
 import numpy as np
-from .kernel import kernels
-from .architecture import *
-from .cost import meanSquare as costFunction
-
-# !! the big problem now is that first layer has activation fucntion as well
+from kernel import kernels
 
 
 class Network():
-    #! first layer is always the input layer
-    def __init__(self, layerDimensions):
-        def connectAllLayers(network):
-            if len(network) > 1:
-                return np.array([ConnectionLayer(network[i], network[i+1]) for i in range(len(network)-1)])
+    def __init__(self):
 
-        self.network = np.array([Layer(x) for x in layerDimensions])
-        self.connectors = connectAllLayers(self.network)
+        # L weight matrix connecrs L and L+1 layer
+        # dimensions of each are dim(L-1),dim(L)
+        self.weights = []
 
-        self.dimensions = layerDimensions
+        # layers represents z values
+        self.layers = []
+
+        # each layer has a specific kernel
+        # None is set so that layer and kernel have the same index
+        self.kernels = [None, ]
+
+        # same dimensions as the layer
+        # None is set so that layer and kernel have the same index
+        self.biases = [None, ]
 
     def __repr__(self):
-        def format_str(layerName, nrNeurons):
-            names = ['Input', 'Hidden Layer', 'Output']
-            return f'{names[layerName]}: {nrNeurons} nevronov \n'
+        return str((self.layers, self.kernels, self.biases))
 
-        reprs = ["V celoti povezana mreža\n"]
-        for i, dim in enumerate(self.dimensions):
-            name = 0
-            if i:
-                name = 1
-            if i == len(self.dimensions) - 1:
-                name = -1
-            reprs.append(format_str(name, dim))
+    def addInputLayer(self, dimension):
+        self.layers.append(np.zeros(dimension))
 
-        return ''.join(reprs)
+    def addLayer(self, dimension, kernel):
+        layer_id = len(self.layers)
 
-        # def
+        if not layer_id:
+            raise Exception('Input layer not defined.')
 
-    def showNeuronValues(self):
-        return (self.network)
+        if not kernel in kernels:
+            raise Exception(
+                f'Kernel not available. Choose from the following: {list(kernels.keys())}')
 
-    def calculateOutput(self):
-        for conn_layer in self.connectors:
-            conn_layer.updateChildrenNeurons()
-
-        return self.network[-1].values()
-
-    def setInputValues(self, values):
-        self.network[0].updateLayer(values)
-
-    def cost(self, y):
-        return costFunction(np.array(y), self.calculateOutput())
+        self.layers.append(np.zeros(dimension))
+        self.biases.append(np.random.rand(dimension))
+        self.kernels.append(kernel)

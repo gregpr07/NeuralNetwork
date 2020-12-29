@@ -9,6 +9,7 @@ class Neuron():
         self.index = index
         self.bias = bias
         self.biasDerivative = 0
+        self.neuronDerivative = 0
 
     def __repr__(self):
         return f'Nevron, z indexom {self.index}, vrednost {self.value} in {self.kernel} kernel'
@@ -28,6 +29,9 @@ class Neuron():
     def changeBiasDerivative(self, biasDerivative):
         self.biasDerivative = biasDerivative
 
+    def changeNeuronDerivative(self, newValue):
+        self.neuronDerivative = newValue
+
 
 class Synapse():
     def __init__(self, parent, child, weight=1):
@@ -45,8 +49,17 @@ class Synapse():
     def changeWeight(self, newWeight):
         self.weight = newWeight
 
-    def changeWeightDerivative(self, newWeightDerivative):
+    def change_dW(self, newWeightDerivative):
         self.weightDerivative = newWeightDerivative
+
+    def calculate_dW(self):
+        dC_da = self.child.neuronDerivative
+        da_dZ = self.child.kernel(self.child.value, derivative=True)
+        dz_dW = self.parent.output()
+
+        dC_dW = dC_da * da_dZ * dz_dW
+
+        self.change_dW(dC_dW)
 
 
 class Layer():
@@ -100,3 +113,4 @@ class ConnectionLayer():
     def calculateChildDerivative(self, i):
         neuron = self.getChild(i)
         for parent in self.parentNodes(i):
+            pass
