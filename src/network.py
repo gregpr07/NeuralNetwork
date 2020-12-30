@@ -59,11 +59,14 @@ class Network():
 
         self.layers[0] = arr
 
+    def kernelFunction(self, x, i, derivative=False):
+        return kernels[self.kernels[i]](x, derivative=derivative)
+
     def outputLayer(self, i):
         if i == 0:
             return self.layers[i]
 
-        return kernels[self.kernels[i]](self.layers[i] + self.biases[i])
+        return self.kernelFunction(self.layers[i] + self.biases[i], i)
 
     def propagateForwards(self, i):
         self.layers[i+1] = np.matmul(self.outputLayer(i), self.weights[i])
@@ -85,11 +88,11 @@ class Network():
 
         gradC = cost[self.costFunction](y, pred_y, derivative=True)
 
-        self.deltas[-1] = kernels[self.kernels[-1]](gradC, derivative=True)
+        self.deltas[-1] = self.kernelFunction(gradC, -1, derivative=True)
 
         for i in reversed(range(1, len(self.deltas) - 1)):
             prod = np.matmul(self.weights[i], self.deltas[i+1])
-            self.deltas[i] = kernels[self.kernels[i]](prod, derivative=True)
+            self.deltas[i] = self.kernelFunction(prod, i, derivative=True)
 
         for i in range(len(self.weightGrads)):
             dC_dWl = np.outer(self.deltas[i + 1], self.outputLayer(i))
@@ -99,11 +102,12 @@ class Network():
         for i in range(len(self.weightGrads)):
             self.weights[i] -= self.weightGrads[i] * alpha
 
-        # for i in reversed(range(1, len(self.biases))):
-        #    self.biases[i] -= self.deltas[i] * alpha
+        for i in reversed(range(1, len(self.biases))):
+            self.biases[i] -= self.kernelFunction(self.deltas[i], i) * alpha
 
     def visualizeTrain(self, x, y, length, alpha=0.1):
+        print(self.calculateCost(x, y))
         for i in range(length):
             self.propagateBackwards(x, y)
             self.train(alpha=alpha)
-            print(self.calculateCost(x, y))
+        print(self.calculateCost(x, y))
