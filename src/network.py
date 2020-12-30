@@ -92,7 +92,7 @@ class Network():
 
         gradC = cost[self.costFunction](self.Al_Caches[-1], Y, derivative=True)
 
-        self.biasGrads[-1] = np.sum(gradC, axis=1, keepdims=True) / m
+        self.biasGrads[-1] = np.sum(gradC, axis=1) / m
         self.weightGrads[-1] = np.dot(gradC, self.Al_Caches[-1].T) / m
 
         self.deltas[-1] = np.dot(self.weights[-1], gradC)
@@ -105,13 +105,12 @@ class Network():
             self.deltas[l] = np.dot(self.weights[l - 1], dZ)
 
             self.weightGrads[l - 1] = np.dot(dZ, self.deltas[l].T) / m
-            self.biasGrads[l] = np.sum(dZ, axis=1, keepdims=True)
-
-        print(self.weightGrads)
+            self.biasGrads[l] = np.sum(dZ, axis=1)
 
     # X,Y are matrices (arrays of inpts, outputs)
 
     def train(self, X, Y):
+
         X = np.array(X)
 
         Y = np.array(Y)
@@ -133,12 +132,18 @@ class Network():
         # because it now represents vectors in column
         self.propagateBackwards(Y.T, m)
 
-    def applyGrad(self, alpha=0.1):
-        for i in range(len(self.weightGrads)):
-            self.weights[i] -= self.weightGrads[i] * alpha
+        self.applyGrad()
 
-        for i in reversed(range(1, len(self.biases))):
-            self.biases[i] -= self.kernelFunction(self.biasGrads[i], i) * alpha
+        print(self.calculateCost(X[0], Y[0]))
+
+    def applyGrad(self, alpha=0.1):
+
+        for i in range(len(self.weightGrads)):
+
+            self.weights[i] = self.weights[i] - self.weightGrads[i].T * alpha
+
+            self.biases[i + 1] = self.biases[i + 1] - \
+                self.biasGrads[i + 1] * alpha
 
     def visualizeTrain(self, x, y, length, alpha=0.1):
         print(self.calculateCost(x, y))
