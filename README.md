@@ -14,6 +14,8 @@
 
 ## Beware
 
+Ni implementiranega dropout-a tako, da zna priti do overfita.
+
 ## Viri in literatura
 
 - https://www.youtube.com/watch?v=tIeHLnjs5U8

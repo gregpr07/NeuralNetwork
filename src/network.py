@@ -20,6 +20,7 @@ class Network():
         # same dimensions as the layer
         # None is set so that layer and kernel have the same index
         self.biases = [None, ]
+        self.biasGrads = [None, ]
 
         self.costFunction = cost
 
@@ -51,6 +52,7 @@ class Network():
         self.kernels.append(kernel)
         self.deltas.append(False)
         self.weightGrads.append(False)
+        self.biasGrads.append(False)
 
         self.weights.append((np.random.rand(
             self.layers[layer_id - 1].size, dimension) - 0.5) * 2)
@@ -86,49 +88,57 @@ class Network():
         pred_y = self.calculateOutput(x)
         return cost[self.costFunction](y, pred_y)
 
-    # ! fix
-    def propagateBackwards(self, x, y):
-        pred_y = self.calculateOutput(x)
+    def propagateBackwards(self, Y, m):
 
-        gradC = cost[self.costFunction](y, pred_y, derivative=True)
+        gradC = cost[self.costFunction](self.Al_Caches[-1], Y, derivative=True)
 
-        self.deltas[-1] = self.kernelFunction(
-            self.layers[-1], -1, derivative=True)*gradC
+        self.biasGrads[-1] = np.sum(gradC, axis=1, keepdims=True) / m
+        self.weightGrads[-1] = np.dot(gradC, self.Al_Caches[-1].T) / m
 
-        for i in reversed(range(1, len(self.deltas) - 1)):
-            prod = np.matmul(self.weights[i], self.deltas[i+1])
-            self.deltas[i] = self.kernelFunction(
-                self.layers[i], i, derivative=True)*prod
+        self.deltas[-1] = np.dot(self.weights[-1], gradC)
 
-        for i in range(len(self.weightGrads)):
-            dC_dWl = np.outer(self.deltas[i + 1], self.outputLayer(i))
-            self.weightGrads[i] = dC_dWl.T
+        for l in reversed(range(len(self.layers) - 1)):
+
+            dZ = self.kernelFunction(self.deltas[l + 1], l+1, derivative=True)
+
+            #! check the index
+            self.deltas[l] = np.dot(self.weights[l - 1], dZ)
+
+            self.weightGrads[l - 1] = np.dot(dZ, self.deltas[l].T) / m
+            self.biasGrads[l] = np.sum(dZ, axis=1, keepdims=True)
+
+        print(self.weightGrads)
 
     # X,Y are matrices (arrays of inpts, outputs)
+
     def train(self, X, Y):
         X = np.array(X)
+
         Y = np.array(Y)
 
         # batch size
-        m = X.shape[1]
+        m = X.shape[0]
 
         self.Al_Caches = []
-        for i in range(len(self.layers)):
-            self.Al_Caches.append(np.zeros(self.layers[i].size, m))
+        for layer in self.layers:
+            self.Al_Caches.append(np.zeros((layer.size, m)))
 
         # to cache all layers in all batches
         for i, (x, y) in enumerate(zip(X, Y)):
-            self.calculateOutput(x, y)
+            self.calculateOutput(x)
 
-            for l in range(len(layers)):
-                self.Al_Caches[l][i] = self.outputLayer(l)
+            for l in range(len(self.layers)):
+                self.Al_Caches[l][:, i] = self.outputLayer(l)
+
+        # because it now represents vectors in column
+        self.propagateBackwards(Y.T, m)
 
     def applyGrad(self, alpha=0.1):
         for i in range(len(self.weightGrads)):
             self.weights[i] -= self.weightGrads[i] * alpha
 
         for i in reversed(range(1, len(self.biases))):
-            self.biases[i] -= self.kernelFunction(self.deltas[i], i) * alpha
+            self.biases[i] -= self.kernelFunction(self.biasGrads[i], i) * alpha
 
     def visualizeTrain(self, x, y, length, alpha=0.1):
         print(self.calculateCost(x, y))
