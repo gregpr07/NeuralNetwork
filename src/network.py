@@ -27,6 +27,9 @@ class Network():
         self.deltas = [None, ]
         self.weightGrads = []
 
+        # this will be matrices of size (dim(Al),batch)
+        self.Al_Caches = []
+
     def __repr__(self):
         return str((self.layers))
 
@@ -50,7 +53,7 @@ class Network():
         self.weightGrads.append(False)
 
         self.weights.append((np.random.rand(
-            self.layers[layer_id - 1].size, dimension)-0.5)*2)
+            self.layers[layer_id - 1].size, dimension) - 0.5) * 2)
 
     def setInput(self, arr):
         arr = np.array(arr)
@@ -83,22 +86,44 @@ class Network():
         pred_y = self.calculateOutput(x)
         return cost[self.costFunction](y, pred_y)
 
+    # ! fix
     def propagateBackwards(self, x, y):
         pred_y = self.calculateOutput(x)
 
         gradC = cost[self.costFunction](y, pred_y, derivative=True)
 
-        self.deltas[-1] = self.kernelFunction(gradC, -1, derivative=True)
+        self.deltas[-1] = self.kernelFunction(
+            self.layers[-1], -1, derivative=True)*gradC
 
         for i in reversed(range(1, len(self.deltas) - 1)):
             prod = np.matmul(self.weights[i], self.deltas[i+1])
-            self.deltas[i] = self.kernelFunction(prod, i, derivative=True)
+            self.deltas[i] = self.kernelFunction(
+                self.layers[i], i, derivative=True)*prod
 
         for i in range(len(self.weightGrads)):
             dC_dWl = np.outer(self.deltas[i + 1], self.outputLayer(i))
             self.weightGrads[i] = dC_dWl.T
 
-    def train(self, alpha=0.1):
+    # X,Y are matrices (arrays of inpts, outputs)
+    def train(self, X, Y):
+        X = np.array(X)
+        Y = np.array(Y)
+
+        # batch size
+        m = X.shape[1]
+
+        self.Al_Caches = []
+        for i in range(len(self.layers)):
+            self.Al_Caches.append(np.zeros(self.layers[i].size, m))
+
+        # to cache all layers in all batches
+        for i, (x, y) in enumerate(zip(X, Y)):
+            self.calculateOutput(x, y)
+
+            for l in range(len(layers)):
+                self.Al_Caches[l][i] = self.outputLayer(l)
+
+    def applyGrad(self, alpha=0.1):
         for i in range(len(self.weightGrads)):
             self.weights[i] -= self.weightGrads[i] * alpha
 
