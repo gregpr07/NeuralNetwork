@@ -15,7 +15,7 @@ def ReLU(X, alpha=0, derivative=False):
     if derivative == False:
         return np.where(X < 0, alpha*X, X)
     elif derivative == True:
-        X_relu = np.ones_like(X, dtype=np.float64)
+        X_relu = np.ones_like(X)
         X_relu[X < 0] = alpha
         return X_relu
 

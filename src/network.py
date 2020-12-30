@@ -1,6 +1,7 @@
 import numpy as np
 from kernel import kernels
 from cost import cost
+from tqdm import tqdm
 
 
 class Network():
@@ -89,30 +90,30 @@ class Network():
         return cost[self.costFunction](y, pred_y)
 
     def propagateBackwards(self, Y, m):
+        L = len(self.layers) - 1
 
         gradC = cost[self.costFunction](self.Al_Caches[-1], Y, derivative=True)
 
         self.biasGrads[-1] = np.sum(gradC, axis=1) / m
         self.weightGrads[-1] = np.dot(gradC, self.Al_Caches[-1].T) / m
 
-        self.deltas[-1] = np.dot(self.weights[-1], gradC)
+        self.deltas[L] = np.dot(self.weights[L-1], gradC)
 
-        for l in reversed(range(len(self.layers) - 1)):
+        for l in reversed(range(1, L)):
 
-            dZ = self.kernelFunction(self.deltas[l + 1], l+1, derivative=True)
+            dZ = self.kernelFunction(
+                self.deltas[l + 1], l + 1, derivative=True)
 
             #! check the index
-            self.deltas[l] = np.dot(self.weights[l - 1], dZ)
+            self.deltas[l] = np.dot(self.weights[l-1], dZ)
 
             self.weightGrads[l - 1] = np.dot(dZ, self.deltas[l].T) / m
-            self.biasGrads[l] = np.sum(dZ, axis=1)
+            self.biasGrads[l] = np.sum(dZ, axis=1) / m
 
     # X,Y are matrices (arrays of inpts, outputs)
-
-    def train(self, X, Y):
+    def train_batch(self, X, Y, alpha=0.01):
 
         X = np.array(X)
-
         Y = np.array(Y)
 
         # batch size
@@ -132,13 +133,13 @@ class Network():
         # because it now represents vectors in column
         self.propagateBackwards(Y.T, m)
 
-        self.applyGrad()
+        self.applyGrad(alpha=alpha)
 
-        print(self.calculateCost(X[0], Y[0]))
+        # print(self.calculateCost(X[0], Y[0]))
 
-    def applyGrad(self, alpha=0.1):
+    def applyGrad(self, alpha):
 
-        for i in range(len(self.weightGrads)):
+        for i in range(len(self.weightGrads)-1):
 
             self.weights[i] = self.weights[i] - self.weightGrads[i].T * alpha
 
@@ -151,3 +152,26 @@ class Network():
             self.propagateBackwards(x, y)
             self.train(alpha=alpha)
         print(self.calculateCost(x, y))
+
+    def predict(self, x):
+        return self.calculateOutput(x)
+
+    def train(self, X_train, Y_train, epochs, batch_size=20, leaning_rate=0.01):
+
+        for batch in range(epochs):
+
+            for i in tqdm(range(0, len(X_train), batch_size)):
+
+                self.train_batch(X_train[i:i+batch_size],
+                                 Y_train[i:i+batch_size])
+
+    def accuracy(self, x_val, y_val):
+
+        predictions = []
+
+        for x, y in zip(x_val, y_val):
+            output = self.calculateOutput(x)
+            pred = np.argmax(output)
+            predictions.append(pred == np.argmax(y))
+
+        return np.mean(predictions)
