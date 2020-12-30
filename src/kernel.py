@@ -1,23 +1,26 @@
 import numpy as np
 
 
-def sigmoid(x, derivative=False):
-    # Sigmoida in odvod
-    s = 1/(1 + np.exp(-x))
+def sigmoid(X, derivative=False):
+    # Sigmoid and derivative
+    s = 1/(1 + np.exp(-X))
     if not derivative:
         return s
     else:
         return s * (1 - s)
 
 
-def ReLu(x, derivative=False):
-    if not derivative:
-        return x if x > 0 else 0,
-    else:
-        return 1 if x > 0 else 0,
+def ReLU(X, alpha=0, derivative=False):
+    # ReLU function and derivative
+    if derivative == False:
+        return np.where(X < 0, alpha*X, X)
+    elif derivative == True:
+        X_relu = np.ones_like(X, dtype=np.float64)
+        X_relu[X < 0] = alpha
+        return X_relu
 
 
 kernels = {
-    "ReLu": ReLu,
+    "ReLu": ReLU,
     'Sigmoid': sigmoid
 }

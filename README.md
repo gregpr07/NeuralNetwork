@@ -4,18 +4,15 @@
 
 ## Uporaba
 
-`net = Network([10,5,4,2])`
+`net = Network()`
 
-Ta mreža predstavlja 10 inputov in 2 ouputa.
+`net.addInputLayer(dim_0)`
 
-Prvi pristop je čisto preveč matematično "neumen". Je predstavljivo vse kar se more zgoditi, vendar bi moral na roke implementirati množenje matrik, kar pa seveda ni najbolj pametno (in je v pytohonu čisto preveč počasno!!).
+`net.addLayer(dim_L)`
+
+`net.calculateOutput([input vector])`
 
 ## Beware
-
-### Stari approach
-
-Zaenkrat ni implementiran dropout in backpropagation.
-Prvi approach bo zelo inefficient, ker bom racunal odvod za vsak nevron (connection) posebej.
 
 ## Viri in literatura
 
