@@ -12,7 +12,17 @@
 
 `net.train(X,Y)`
 
+`net.predict(x)`
+
 where X and Y are batches of input and output vectors that match the sizes of first and last layer.
+
+## Uspeh
+
+Nauči se:
+
+### mnist_784 databaza od scikit-learn
+
+90% accuracy po 10 epochih.
 
 ## Beware
 

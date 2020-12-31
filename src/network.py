@@ -31,6 +31,7 @@ class Network():
 
         # this will be matrices of size (dim(Al),batch)
         self.Al_Caches = []
+        self.Z_Caches = []
 
     def __repr__(self):
         return str((self.layers))
@@ -68,9 +69,15 @@ class Network():
     def kernelFunction(self, x, i, derivative=False):
         return kernels[self.kernels[i]](x, derivative=derivative)
 
+    def ZLayer(self, i):
+        if i == 0:
+            return self.layers[0]
+
+        return self.layers[i] + self.biases[i]
+
     def outputLayer(self, i):
         if i == 0:
-            return self.layers[i]
+            return self.layers[0]
 
         return self.kernelFunction(self.layers[i] + self.biases[i], i)
 
@@ -90,25 +97,25 @@ class Network():
         return cost[self.costFunction](y, pred_y)
 
     def propagateBackwards(self, Y, m):
-        L = len(self.layers) - 1
+        L = len(self.layers)-1
 
         gradC = cost[self.costFunction](self.Al_Caches[-1], Y, derivative=True)
 
-        self.biasGrads[-1] = np.sum(gradC, axis=1) / m
-        self.weightGrads[-1] = np.dot(gradC, self.Al_Caches[-1].T) / m
+        self.biasGrads[L] = np.sum(gradC, axis=1) / m
+        self.weightGrads[L-1] = np.dot(gradC, self.Al_Caches[-2].T) / m
 
-        self.deltas[L] = np.dot(self.weights[L-1], gradC)
+        self.deltas[L-1] = np.dot(self.weights[-1], gradC)
 
-        for l in reversed(range(1, L)):
+        for l in reversed(range(L - 1)):
 
-            dZ = self.kernelFunction(
-                self.deltas[l + 1], l + 1, derivative=True)
+            dZ = np.multiply(self.deltas[l+1], self.kernelFunction(
+                self.Z_Caches[l+1], l+1, derivative=True))
 
-            #! check the index
-            self.deltas[l] = np.dot(self.weights[l-1], dZ)
+            #! check the T
+            self.deltas[l] = np.dot(self.weights[l], dZ)
 
-            self.weightGrads[l - 1] = np.dot(dZ, self.deltas[l].T) / m
-            self.biasGrads[l] = np.sum(dZ, axis=1) / m
+            self.weightGrads[l] = np.dot(dZ, self.Al_Caches[l].T) / m
+            self.biasGrads[l+1] = np.sum(dZ, axis=1) / m
 
     # X,Y are matrices (arrays of inpts, outputs)
     def train_batch(self, X, Y, alpha=0.01):
@@ -120,14 +127,18 @@ class Network():
         m = X.shape[0]
 
         self.Al_Caches = []
+        self.Z_Caches = []
+
         for layer in self.layers:
             self.Al_Caches.append(np.zeros((layer.size, m)))
+            self.Z_Caches.append(np.zeros((layer.size, m)))
 
         # to cache all layers in all batches
         for i, (x, y) in enumerate(zip(X, Y)):
             self.calculateOutput(x)
 
             for l in range(len(self.layers)):
+                self.Z_Caches[l][:, i] = self.ZLayer(l)
                 self.Al_Caches[l][:, i] = self.outputLayer(l)
 
         # because it now represents vectors in column
@@ -154,7 +165,7 @@ class Network():
         print(self.calculateCost(x, y))
 
     def predict(self, x):
-        return self.calculateOutput(x)
+        return np.argmax(self.calculateOutput(x))
 
     def train(self, X_train, Y_train, epochs, batch_size=20, leaning_rate=0.01):
 
