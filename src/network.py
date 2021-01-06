@@ -1,6 +1,6 @@
 import numpy as np
-from kernel import kernels
-from cost import cost
+from src.kernel import kernels
+from src.cost import cost
 from tqdm import tqdm
 
 
